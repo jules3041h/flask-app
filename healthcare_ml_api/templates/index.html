@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Prediction System</title>
+    <link rel="stylesheet" href="./static/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>Healthcare Prediction System</h1>
+        <p>Real-Time Patient Readmission Prediction</p>
+    </div>
+
+    <form id="predictionForm">
+
+        <div class="input-group">
+            <label>Age</label>
+            <input type="number" id="age" placeholder="Enter patient age" required>
+        </div>
+
+        <div class="input-group">
+            <label>Gender</label>
+            <input type="number" id="gender" placeholder="0 = Female, 1 = Male" required>
+        </div>
+
+        <div class="input-group">
+            <label>Blood Pressure</label>
+            <input type="number" id="blood_pressure" placeholder="Enter blood pressure" required>
+        </div>
+
+        <div class="input-group">
+            <label>Glucose Level</label>
+            <input type="number" id="glucose_level" placeholder="Enter glucose level" required>
+        </div>
+
+        <div class="input-group">
+            <label>BMI</label>
+            <input type="number" step="0.1" id="bmi" placeholder="Enter BMI" required>
+        </div>
+
+        <div class="input-group">
+            <label>Heart Rate</label>
+            <input type="number" id="heart_rate" placeholder="Enter heart rate" required>
+        </div>
+
+        <div class="input-group">
+            <label>Previous Admissions</label>
+            <input type="number" id="previous_admissions" placeholder="Previous admissions" required>
+        </div>
+
+        <div class="input-group">
+            <label>Chronic Disease</label>
+            <input type="number" id="chronic_disease" placeholder="0 = No, 1 = Yes" required>
+        </div>
+
+        <div class="input-group">
+            <label>Smoking Status</label>
+            <input type="number" id="smoking_status" placeholder="0 = No, 1 = Yes" required>
+        </div>
+
+        <button type="submit">Predict Patient Risk</button>
+
+    </form>
+
+    <div id="result"></div>
+
+</div>
+
+<script>
+document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+
+    e.preventDefault();
+
+    const data = {
+        age: parseInt(document.getElementById('age').value),
+        gender: parseInt(document.getElementById('gender').value),
+        blood_pressure: parseInt(document.getElementById('blood_pressure').value),
+        glucose_level: parseInt(document.getElementById('glucose_level').value),
+        bmi: parseFloat(document.getElementById('bmi').value),
+        heart_rate: parseInt(document.getElementById('heart_rate').value),
+        previous_admissions: parseInt(document.getElementById('previous_admissions').value),
+        chronic_disease: parseInt(document.getElementById('chronic_disease').value),
+        smoking_status: parseInt(document.getElementById('smoking_status').value)
+    };
+
+    try {
+
+        const response = await fetch('/predict', {
+
+            method: 'POST',
+
+            headers: {
+                'Content-Type': 'application/json'
+            },
+
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        document.getElementById('result').innerHTML = `
+
+            <h3>Prediction Result</h3>
+
+            <p><strong>Risk Level:</strong> ${result.risk_level}</p>
+
+            <p><strong>Prediction:</strong> ${result.prediction}</p>
+
+            <p><strong>Probability:</strong> ${result.probability}</p>
+
+        `;
+
+    } catch(error) {
+
+        document.getElementById('result').innerHTML = `
+            <p>Error connecting to API</p>
+        `;
+    }
+
+});
+</script>
+
+</body>
+</html>

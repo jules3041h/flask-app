@@ -1,0 +1,7 @@
+age,gender,blood_pressure,glucose_level,bmi,heart_rate,previous_admissions,chronic_disease,smoking_status,readmitted
+65,1,140,180,29.5,90,3,1,1,1
+40,0,120,95,22.1,72,0,0,0,0
+70,1,150,200,31.2,95,4,1,1,1
+35,0,110,85,20.0,70,0,0,0,0
+60,1,145,170,28.0,88,2,1,1,1
+10,1,100,75,18.5,65,0,0,0,0

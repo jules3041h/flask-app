@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MoodWave AI</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --void:#02040a;--deep:#060e1a;--card:rgba(6,18,36,0.82);--border:rgba(0,220,255,0.13);
+  --cyan:#00e5ff;--violet:#7c4dff;--pink:#e91e8c;--gold:#ffd600;--green:#00e676;
+  --t1:#e8f4ff;--t2:rgba(180,210,240,0.55);--t3:rgba(180,210,240,0.28);
+  --r:18px;--rp:999px;
+  --gc0:var(--glow-cyan,0 0 18px rgba(0,229,255,0.35));
+}
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;
+  background:var(--void);color:var(--t1);min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 10%,rgba(0,229,255,0.07) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 45% at 85% 90%,rgba(124,77,255,0.09) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 60% at 50% 50%,rgba(233,30,140,0.04) 0%,transparent 70%);
+  animation:bgShift 20s ease-in-out infinite alternate;
+}
+@keyframes bgShift{0%{opacity:1}50%{opacity:.7}100%{opacity:1;filter:hue-rotate(25deg)}}
+
+canvas#pc{position:fixed;inset:0;z-index:1;pointer-events:none}
+
+.grid-bg{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background-image:linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);
+  background-size:55px 55px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 20%,transparent 100%);
+}
+
+header,main,footer,section{position:relative;z-index:10}
+
+/* HEADER */
+header{
+  position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(20px) saturate(180%);
+  background:rgba(2,4,10,0.88);
+  border-bottom:1px solid var(--border);
+}
+.hdr{max-width:1100px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{font-size:1.6rem;color:var(--cyan);filter:drop-shadow(0 0 10px var(--cyan));animation:iconP 3s ease-in-out infinite}
+@keyframes iconP{0%,100%{filter:drop-shadow(0 0 8px var(--cyan))}50%{filter:drop-shadow(0 0 22px var(--cyan)) drop-shadow(0 0 44px var(--violet))}}
+.logo-name{font-family:'Courier New',monospace;font-size:1.2rem;font-weight:700;letter-spacing:.08em}
+.logo-ai{color:var(--cyan);text-shadow:0 0 14px var(--cyan)}
+.nav-bits{display:flex;align-items:center;gap:12px}
+.vtag{font-family:monospace;font-size:.7rem;color:var(--t3);background:rgba(0,229,255,0.06);border:1px solid var(--border);padding:3px 9px;border-radius:var(--rp)}
+.live-dot{display:flex;align-items:center;gap:5px;font-family:monospace;font-size:.68rem;color:var(--green);letter-spacing:.15em}
+.dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.5s ease-in-out infinite;box-shadow:0 0 7px var(--green)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.hline{height:1px;background:linear-gradient(90deg,transparent,var(--cyan),var(--violet),transparent);opacity:.4}
+
+/* HERO */
+.hero{text-align:center;padding:56px 24px 28px;max-width:780px;margin:0 auto}
+.hero-badge{
+  display:inline-block;font-family:monospace;font-size:.62rem;letter-spacing:.22em;color:var(--cyan);
+  border:1px solid rgba(0,229,255,0.28);background:rgba(0,229,255,0.05);
+  padding:5px 16px;border-radius:var(--rp);margin-bottom:22px;animation:fadeUp .8s ease both
+}
+.hero h1{display:flex;flex-direction:column;gap:2px;margin-bottom:16px}
+.h1a{font-family:monospace;font-size:clamp(1rem,2.5vw,1.5rem);color:var(--t2);letter-spacing:.14em;animation:fadeUp .8s ease both .1s;opacity:0;animation-fill-mode:forwards}
+.h1b{font-family:monospace;font-size:clamp(2.8rem,8vw,5.8rem);font-weight:900;line-height:1;letter-spacing:.04em;background:linear-gradient(135deg,var(--cyan),var(--violet),var(--pink),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% 200%;animation:fadeUp .8s ease both .2s,gshift 6s ease-in-out infinite alternate;opacity:0;animation-fill-mode:forwards}
+@keyframes gshift{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+.h1c{font-family:monospace;font-size:clamp(1rem,2.5vw,1.5rem);color:var(--t2);letter-spacing:.14em;animation:fadeUp .8s ease both .3s;opacity:0;animation-fill-mode:forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.hero p{font-size:.95rem;color:var(--t2);line-height:1.8;max-width:500px;margin:0 auto 28px;animation:fadeUp .8s ease both .4s;opacity:0;animation-fill-mode:forwards}
+.wv{display:flex;align-items:center;justify-content:center;gap:2px;height:50px;opacity:.5}
+.wb{width:3px;border-radius:2px;background:linear-gradient(to top,var(--violet),var(--cyan));animation:wvh 1.4s ease-in-out infinite alternate;animation-delay:calc(var(--i)*.045s);min-height:3px}
+@keyframes wvh{0%{transform:scaleY(.25)}100%{transform:scaleY(1.7)}}
+
+/* DASHBOARD */
+.dash{max-width:1100px;margin:0 auto;padding:0 20px 52px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:780px){.dash{grid-template-columns:1fr}}
+
+/* GLASS CARD */
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  backdrop-filter:blur(20px) saturate(160%);
+  box-shadow:0 8px 36px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.03);
+  padding:28px;transition:border-color .3s,box-shadow .3s;overflow:hidden
+}
+.card:hover{border-color:rgba(0,229,255,0.22);box-shadow:0 10px 52px rgba(0,0,0,0.55),0 0 32px rgba(0,229,255,0.06),inset 0 1px 0 rgba(255,255,255,0.03)}
+
+.ph{display:flex;align-items:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.ph-icon{font-size:1.3rem;color:var(--cyan);filter:drop-shadow(0 0 7px var(--cyan))}
+.ph h2{font-family:monospace;font-size:1rem;font-weight:700;letter-spacing:.12em}
+.ph-sub{font-family:monospace;font-size:.7rem;color:var(--t3);letter-spacing:.08em;width:100%;margin-top:-5px;padding-left:38px}
+
+/* FORM */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fg{display:flex;flex-direction:column;gap:8px}
+.fg[data-w="full"]{grid-column:1/-1}
+.flbl{font-family:monospace;font-size:.62rem;letter-spacing:.2em;color:var(--cyan);display:flex;align-items:center;gap:6px}
+.sw{position:relative}
+.ss{
+  width:100%;padding:10px 36px 10px 14px;background:rgba(0,229,255,0.04);
+  border:1px solid rgba(0,229,255,0.18);border-radius:9px;color:var(--t1);
+  font-size:.95rem;font-weight:600;appearance:none;cursor:pointer;
+  transition:border-color .25s,background .25s,box-shadow .25s;font-family:inherit
+}
+.ss:focus{outline:none;border-color:var(--cyan);background:rgba(0,229,255,0.07);box-shadow:0 0 0 3px rgba(0,229,255,0.12)}
+.ss:hover{border-color:rgba(0,229,255,0.38)}
+.ss option{background:#061220}
+.sa{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--cyan);pointer-events:none;font-size:.8rem}
+
+/* SLIDER */
+.slw{display:flex;flex-direction:column;gap:8px}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:rgba(0,229,255,0.12);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan),0 0 20px rgba(0,229,255,0.35);transition:transform .2s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3)}
+.sl-lbl{display:flex;justify-content:space-between;font-family:monospace;font-size:.58rem;color:var(--t3);letter-spacing:.1em}
+.edsp{display:flex;align-items:center;gap:12px;margin-top:2px}
+#ev{font-family:monospace;font-size:1.8rem;font-weight:900;color:var(--cyan);text-shadow:0 0 16px var(--cyan);min-width:2ch}
+.ebars{display:flex;gap:4px;align-items:flex-end}
+.ebars span{width:7px;border-radius:2px 2px 0 0;background:rgba(0,229,255,0.12);transition:background .3s}
+.ebars span:nth-child(1){height:9px}
+.ebars span:nth-child(2){height:15px}
+.ebars span:nth-child(3){height:21px}
+.ebars span:nth-child(4){height:27px}
+.ebars span:nth-child(5){height:33px}
+.ebars span.on{background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
+
+/* BUTTONS */
+.brow{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+.btn-p{
+  flex:1;min-width:150px;position:relative;display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 22px;background:linear-gradient(135deg,rgba(0,229,255,0.13),rgba(124,77,255,0.13));
+  border:1px solid var(--cyan);border-radius:11px;color:var(--cyan);font-family:monospace;
+  font-size:.75rem;font-weight:700;letter-spacing:.18em;cursor:pointer;overflow:hidden;
+  text-shadow:0 0 10px var(--cyan);transition:all .25s
+}
+.btn-p:hover{background:linear-gradient(135deg,rgba(0,229,255,0.22),rgba(124,77,255,0.22));box-shadow:0 0 18px rgba(0,229,255,0.3);transform:translateY(-2px)}
+.btn-p:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-p::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent);transition:left .5s}
+.btn-p:hover::after{left:160%}
+.btn-s{
+  padding:13px 20px;background:rgba(233,30,140,0.07);border:1px solid rgba(233,30,140,0.35);
+  border-radius:11px;color:var(--pink);font-family:monospace;font-size:.72rem;font-weight:700;
+  letter-spacing:.16em;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .25s;white-space:nowrap
+}
+.btn-s:hover{background:rgba(233,30,140,0.14);box-shadow:0 0 16px rgba(233,30,140,0.3);transform:translateY(-2px)}
+.btn-s:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* RESULT PANEL */
+.ridl{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:18px;text-align:center}
+.rviz{position:relative;width:90px;height:90px;margin:0 auto}
+.rring{position:absolute;border-radius:50%;border:1px solid;top:50%;left:50%;transform:translate(-50%,-50%)}
+.r1{width:90px;height:90px;border-color:rgba(0,229,255,0.13);animation:rp 3s ease-in-out infinite}
+.r2{width:62px;height:62px;border-color:rgba(124,77,255,0.18);animation:rp 3s ease-in-out infinite .5s}
+.r3{width:36px;height:36px;border-color:rgba(233,30,140,0.22);animation:rp 3s ease-in-out infinite 1s}
+.rc{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.2rem;color:var(--cyan);filter:drop-shadow(0 0 8px var(--cyan));animation:iconP 3s ease-in-out infinite}
+@keyframes rp{0%,100%{opacity:.28;transform:translate(-50%,-50%) scale(1)}50%{opacity:.75;transform:translate(-50%,-50%) scale(1.07)}}
+.rit{font-family:monospace;font-size:.8rem;color:var(--t2);letter-spacing:.1em}
+.ris{font-size:.75rem;color:var(--t3)}
+
+.rldg{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:20px;text-align:center}
+.lvz{display:flex;gap:4px;align-items:center;height:54px}
+.lb{width:5px;border-radius:2px;background:linear-gradient(to top,var(--violet),var(--cyan));animation:lp 1s ease-in-out infinite alternate;animation-delay:var(--d);min-height:5px}
+@keyframes lp{0%{height:5px;opacity:.35}100%{height:46px;opacity:1}}
+.ltxt{font-family:monospace;font-size:.8rem;color:var(--cyan);letter-spacing:.12em;text-shadow:0 0 18px var(--cyan)}
+.lsteps{display:flex;flex-direction:column;gap:6px}
+.ls{font-family:monospace;font-size:.65rem;color:var(--t3);letter-spacing:.09em;padding:4px 12px;border-radius:var(--rp);transition:all .4s}
+.ls.act{color:var(--cyan);background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.18);text-shadow:0 0 9px var(--cyan)}
+.ls.done{color:var(--green);text-decoration:line-through;text-decoration-color:rgba(0,230,118,0.35)}
+
+.rcon{display:flex;flex-direction:column;gap:20px}
+.rhdr{text-align:center}
+.rbadge{display:inline-block;font-family:monospace;font-size:.6rem;letter-spacing:.18em;padding:4px 14px;border-radius:var(--rp);margin-bottom:10px;border:1px solid currentColor;opacity:.8}
+.rcat{font-family:monospace;font-size:clamp(1.1rem,2.8vw,1.65rem);font-weight:900;letter-spacing:.06em;line-height:1.2;margin-bottom:8px;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ratm{font-size:.85rem;color:var(--t2);line-height:1.65;max-width:360px;margin:0 auto}
+
+.cblk{display:flex;align-items:center;justify-content:space-around;gap:16px;flex-wrap:wrap}
+.carc{position:relative;width:110px;height:110px}
+.carc svg{width:100%;height:100%;transform:rotate(-90deg)}
+.arc-bg{fill:none;stroke:rgba(0,229,255,0.07);stroke-width:8}
+.arc-f{fill:none;stroke:url(#ag);stroke-width:8;stroke-linecap:round;stroke-dasharray:314;stroke-dashoffset:314;transition:stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)}
+.cac{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cv{font-family:monospace;font-size:1.3rem;font-weight:900;color:var(--cyan);text-shadow:0 0 14px var(--cyan)}
+.cl{font-family:monospace;font-size:.52rem;color:var(--t3);letter-spacing:.1em;margin-top:1px}
+
+.emb{text-align:center}
+.eml{display:block;font-family:monospace;font-size:.58rem;letter-spacing:.18em;color:var(--t3);margin-bottom:7px}
+.emtr{display:flex;gap:4px;align-items:flex-end;justify-content:center;height:44px}
+.embar{width:16px;border-radius:2px 2px 0 0;background:rgba(0,229,255,0.09);transition:all .6s cubic-bezier(.4,0,.2,1)}
+.embar.lit{background:linear-gradient(to top,var(--violet),var(--cyan));box-shadow:0 0 10px var(--cyan)}
+.emv{display:block;font-family:monospace;font-size:.7rem;color:var(--cyan);margin-top:6px;letter-spacing:.09em}
+
+.slbl{font-family:monospace;font-size:.6rem;letter-spacing:.18em;color:var(--t3);margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:5px 12px;border-radius:var(--rp);font-weight:600;font-size:.78rem;letter-spacing:.04em;border:1px solid;cursor:default;transition:all .25s;animation:chF .5s ease both}
+.chip:hover{transform:translateY(-2px) scale(1.05)}
+@keyframes chF{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:none}}
+
+.anames{font-size:.88rem;color:var(--t2);line-height:1.6}
+.epills{display:flex;flex-wrap:wrap;gap:7px}
+.ep{padding:4px 11px;border-radius:var(--rp);font-family:monospace;font-size:.64rem;letter-spacing:.09em;background:rgba(124,77,255,0.09);border:1px solid rgba(124,77,255,0.22);color:var(--violet)}
+
+.vis{display:flex;align-items:flex-end;gap:2px;height:52px;padding:0 2px}
+.vb{flex:1;border-radius:2px 2px 0 0;background:linear-gradient(to top,var(--violet),var(--cyan));min-height:3px;opacity:.65}
+.vis.pl .vb{animation:vb .8s ease-in-out infinite alternate;animation-delay:calc(var(--i)*.033s)}
+@keyframes vb{0%{transform:scaleY(.08);opacity:.25}100%{transform:scaleY(1);opacity:.9}}
+
+/* MOOD STRIP */
+.mstrip{max-width:1100px;margin:0 auto 32px;padding:0 20px;display:flex;align-items:center;gap:16px}
+.mslbl{font-family:monospace;font-size:.6rem;letter-spacing:.18em;color:var(--t3);white-space:nowrap}
+.mpscroll{display:flex;gap:7px;overflow-x:auto;padding-bottom:5px;scrollbar-width:thin;scrollbar-color:var(--violet) transparent;-webkit-overflow-scrolling:touch}
+.mp{white-space:nowrap;padding:6px 13px;border-radius:var(--rp);background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.12);color:var(--t2);font-weight:600;font-size:.78rem;letter-spacing:.05em;cursor:pointer;transition:all .2s}
+.mp:hover,.mp.on{background:rgba(0,229,255,0.09);border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,0.18)}
+
+footer{border-top:1px solid var(--border);padding:24px;text-align:center}
+.ft{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:8px;align-items:center}
+.fbrand{font-family:monospace;font-size:.9rem;color:var(--cyan);display:flex;align-items:center;gap:7px;text-shadow:0 0 12px var(--cyan)}
+.fsub{font-size:.75rem;color:var(--t3)}
+.ftags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.ftags span{font-family:monospace;font-size:.64rem;color:var(--violet);opacity:.65}
+</style>
+</head>
+<body>
+
+<canvas id="pc"></canvas>
+<div class="grid-bg"></div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="ag" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00e5ff"/>
+      <stop offset="100%" stop-color="#7c4dff"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<header>
+  <div class="hdr">
+    <div class="logo">
+      <span class="logo-icon">◈</span>
+      <div class="logo-name">MoodWave<span class="logo-ai"> AI</span></div>
+    </div>
+    <div class="nav-bits">
+      <span class="vtag">v2.5</span>
+      <span class="live-dot"><span class="dot"></span>LIVE</span>
+    </div>
+  </div>
+  <div class="hline"></div>
+</header>
+
+<section class="hero">
+  <div class="hero-badge">◆ AI-POWERED MUSIC INTELLIGENCE ◆</div>
+  <h1>
+    <span class="h1a">Feel the</span>
+    <span class="h1b">FREQUENCY</span>
+    <span class="h1c">of your Soul</span>
+  </h1>
+  <p>Describe your mood. The neural network reads your emotional frequency and prescribes the perfect sonic universe for this exact moment.</p>
+  <div class="wv" id="wv"></div>
+</section>
+
+<div class="dash">
+  <div class="card" id="formCard">
+    <div class="ph">
+      <span class="ph-icon">⬡</span>
+      <h2>Mood Matrix</h2>
+      <span class="ph-sub">Configure your emotional frequency</span>
+    </div>
+    <div class="fgrid">
+      <div class="fg">
+        <label class="flbl">◉ MOOD STATE</label>
+        <div class="sw"><select class="ss" id="mood"></select><span class="sa">▾</span></div>
+      </div>
+      <div class="fg">
+        <label class="flbl">◈ MUSIC VIBE</label>
+        <div class="sw"><select class="ss" id="vibe"></select><span class="sa">▾</span></div>
+      </div>
+      <div class="fg">
+        <label class="flbl">▸ ACTIVITY</label>
+        <div class="sw"><select class="ss" id="activity"></select><span class="sa">▾</span></div>
+      </div>
+      <div class="fg">
+        <label class="flbl">◷ TIME OF DAY</label>
+        <div class="sw"><select class="ss" id="time"></select><span class="sa">▾</span></div>
+      </div>
+      <div class="fg" data-w="full">
+        <label class="flbl">⚡ ENERGY LEVEL</label>
+        <div class="slw">
+          <input type="range" id="energy" min="1" max="5" value="3"/>
+          <div class="sl-lbl"><span>Low</span><span>Medium</span><span>High</span></div>
+          <div class="edsp">
+            <span id="ev">3</span>
+            <div class="ebars" id="ebarsc">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="brow">
+      <button class="btn-p" id="pBtn" onclick="go()">◈ ANALYZE MY MOOD</button>
+      <button class="btn-s" id="sBtn" onclick="surprise()">✦ SURPRISE ME</button>
+    </div>
+  </div>
+
+  <div class="card" id="rcard">
+    <div class="ridl" id="ridl">
+      <div class="rviz">
+        <div class="rring r1"></div><div class="rring r2"></div><div class="rring r3"></div>
+        <div class="rc">◈</div>
+      </div>
+      <p class="rit">Awaiting your emotional frequency…</p>
+      <p class="ris">Configure your mood matrix and hit Analyze</p>
+    </div>
+    <div class="rldg" id="rldg" style="display:none">
+      <div class="lvz">
+        <div class="lb" style="--d:0s"></div><div class="lb" style="--d:.09s"></div>
+        <div class="lb" style="--d:.18s"></div><div class="lb" style="--d:.27s"></div>
+        <div class="lb" style="--d:.36s"></div><div class="lb" style="--d:.27s"></div>
+        <div class="lb" style="--d:.18s"></div><div class="lb" style="--d:.09s"></div>
+        <div class="lb" style="--d:0s"></div>
+      </div>
+      <p class="ltxt">Neural network scanning frequency…</p>
+      <div class="lsteps">
+        <span class="ls" id="l1">Parsing mood vectors</span>
+        <span class="ls" id="l2">Calibrating energy nodes</span>
+        <span class="ls" id="l3">Matching sonic signature</span>
+        <span class="ls" id="l4">Generating playlist DNA</span>
+      </div>
+    </div>
+    <div class="rcon" id="rcon" style="display:none">
+      <div class="rhdr">
+        <div class="rbadge" id="rbadge">◆ AI RECOMMENDATION</div>
+        <div class="rcat" id="rcat"></div>
+        <p class="ratm" id="ratm"></p>
+      </div>
+      <div class="cblk">
+        <div class="carc">
+          <svg viewBox="0 0 120 120"><circle class="arc-bg" cx="60" cy="60" r="50"/><circle class="arc-f" id="arcf" cx="60" cy="60" r="50"/></svg>
+          <div class="cac"><span class="cv" id="cpct">0%</span><span class="cl">AI Confidence</span></div>
+        </div>
+        <div class="emb">
+          <span class="eml">ENERGY SCORE</span>
+          <div class="emtr" id="emtr">
+            <div class="embar"></div><div class="embar"></div><div class="embar"></div>
+            <div class="embar"></div><div class="embar"></div>
+          </div>
+          <span class="emv" id="emv"></span>
+        </div>
+      </div>
+      <div>
+        <p class="slbl">◆ RECOMMENDED GENRES</p>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div>
+        <p class="slbl">◆ ARTIST STYLE MATCH</p>
+        <p class="anames" id="art"></p>
+      </div>
+      <div>
+        <p class="slbl">◆ YOUR FREQUENCY</p>
+        <div class="epills" id="epills"></div>
+      </div>
+      <div>
+        <p class="slbl">◆ LIVE VISUALIZER</p>
+        <div class="vis" id="viz"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="mstrip">
+  <span class="mslbl">QUICK MOOD →</span>
+  <div class="mpscroll" id="mps"></div>
+</section>
+
+<footer>
+  <div class="ft">
+    <div class="fbrand">◈ MoodWave AI</div>
+    <p class="fsub">Powered by a custom ML classifier · scikit-learn Random Forest · Flask-ready</p>
+    <div class="ftags"><span>#MachineLearning</span><span>#MusicAI</span><span>#MoodTech</span><span>#AfroVibes</span></div>
+  </div>
+</footer>
+
+<script>
+const MOODS=["Happy","Sad","Angry","Relaxed","Lonely","Romantic","Motivated","Emotional","Chill","Focused","Excited","Party","Heartbroken","Dreamy","Energetic","Calm","Dark","Confident","Night Drive","Gym Mode"];
+const VIBES=["Upbeat","Melancholic","Aggressive","Smooth","Nostalgic","Intense","Peaceful","Ethereal","Groovy","Raw"];
+const ACTS=["Working","Exercising","Relaxing","Driving","Studying","Partying","Meditating","Sleeping","Cooking","Walking"];
+const TIMES=["Morning","Afternoon","Evening","Night","Late Night"];
+
+const DB={
+  "Happy":       {cat:"Pop Anthems",genres:["Pop","Synth-Pop","Electropop","Dance Pop"],atm:"Catchy hooks, bright production, universal feel-good energy",art:"Dua Lipa, The Weeknd, Taylor Swift, Harry Styles",col:"#F06292"},
+  "Sad":         {cat:"Soul & R&B Journey",genres:["R&B","Soul","Neo-Soul","Contemporary R&B"],atm:"Velvety vocals, emotional depth, smooth grooves",art:"H.E.R., SZA, Frank Ocean, Jhené Aiko",col:"#E91E8C"},
+  "Angry":       {cat:"Dark Trap Energy",genres:["Trap","Dark Hip Hop","Drill","Gothic Rap"],atm:"Heavy 808s, brooding melodies, atmospheric darkness",art:"Travis Scott, 21 Savage, NF, Scarlxrd",col:"#8B00FF"},
+  "Relaxed":     {cat:"Jazz Lounge",genres:["Jazz","Smooth Jazz","Bebop","Contemporary Jazz"],atm:"Sophisticated improvisations in a dimly lit lounge",art:"Miles Davis, John Coltrane, Norah Jones, Chet Baker",col:"#C5A028"},
+  "Lonely":      {cat:"Acoustic Dreams",genres:["Acoustic","Folk","Singer-Songwriter","Indie Folk"],atm:"Raw emotion, intimate storytelling, natural warmth",art:"Bon Iver, Phoebe Bridgers, Ed Sheeran, Damien Rice",col:"#558B2F"},
+  "Romantic":    {cat:"Soul & R&B Journey",genres:["R&B","Soul","Neo-Soul","Slow Jams"],atm:"Warm vocals, candlelit grooves, sweet melodies",art:"H.E.R., SZA, Luther Vandross, Sade",col:"#E91E8C"},
+  "Motivated":   {cat:"Hip Hop Hustle",genres:["Hip Hop","Conscious Rap","Boom Bap","Trap"],atm:"Confident bars, hard-hitting beats, street wisdom",art:"Kendrick Lamar, J. Cole, Drake, Nas",col:"#FF4500"},
+  "Emotional":   {cat:"Gospel & Uplift",genres:["Gospel","Contemporary Christian","Worship","Soul Gospel"],atm:"Uplifting harmonies, spiritual warmth, communal joy",art:"Kirk Franklin, Maverick City, Sinach, CeCe Winans",col:"#FF9800"},
+  "Chill":       {cat:"Chill Lo-fi Session",genres:["Lo-fi","Chillhop","Instrumental Hip Hop","Jazz Hop"],atm:"Cozy, nostalgic warmth with soft crackling vinyl textures",art:"Nujabes, Idealism, J Dilla, Lofi Girl",col:"#4FC3F7"},
+  "Focused":     {cat:"Classical Focus",genres:["Classical","Neoclassical","Piano","Orchestral"],atm:"Refined, timeless elegance with rich harmonic complexity",art:"Beethoven, Chopin, Ludovico Einaudi, Max Richter",col:"#FFD700"},
+  "Excited":     {cat:"EDM Festival Mode",genres:["EDM","Progressive House","Trance","Big Room"],atm:"Euphoric drops, festival energy, crowd-moving synths",art:"Martin Garrix, Marshmello, Tiësto, Hardwell",col:"#00E5FF"},
+  "Party":       {cat:"Amapiano Wave",genres:["Amapiano","Afro House","Deep House","Kwaito"],atm:"Log drum bass lines, bubbly piano riffs, South African soul",art:"Kabza De Small, DJ Maphorisa, Focalistic, Msaki",col:"#7B1FA2"},
+  "Heartbroken": {cat:"Acoustic Dreams",genres:["Acoustic","Folk","Indie Folk","Singer-Songwriter"],atm:"Raw heartache poured into intimate acoustic storytelling",art:"Bon Iver, Phoebe Bridgers, Damien Rice, Lewis Capaldi",col:"#558B2F"},
+  "Dreamy":      {cat:"Chillstep Universe",genres:["Chillstep","Melodic Dubstep","Liquid DnB","Ambient Electronic"],atm:"Dreamy synths, emotional builds, floating weightlessness",art:"Blackmill, Purity Ring, Odesza, Petit Biscuit",col:"#1565C0"},
+  "Energetic":   {cat:"Gym Beast Mode",genres:["Workout EDM","Motivational Hip Hop","Metal","Power Trap"],atm:"Maximum energy, adrenaline rush, unstoppable momentum",art:"Eminem, Kanye West, AC/DC, Skrillex",col:"#F44336"},
+  "Calm":        {cat:"Instrumental Escape",genres:["Instrumental","Post-Rock","Ambient","Cinematic"],atm:"Wordless journeys through expansive sonic landscapes",art:"Hans Zimmer, Explosions in the Sky, Moby, Brian Eno",col:"#00897B"},
+  "Dark":        {cat:"Night Drive Synth",genres:["Synthwave","Retrowave","Darksynth","Dream Pop"],atm:"Neon-soaked highways, cinematic nostalgia, midnight aesthetics",art:"Kavinsky, Perturbator, Gunship, Com Truise",col:"#7C4DFF"},
+  "Confident":   {cat:"Funk & Soul Groove",genres:["Funk","Soul","Disco","Neo-Funk"],atm:"Irresistible grooves, brass stabs, pure feel-good energy",art:"James Brown, Daft Punk, Bruno Mars, Anderson .Paak",col:"#FF6F00"},
+  "Night Drive": {cat:"Night Drive Synth",genres:["Synthwave","Retrowave","Darksynth","Lo-fi Hip Hop"],atm:"Neon-soaked highways at 3AM — pure cinematic nostalgia",art:"Kavinsky, Perturbator, Gunship, Com Truise",col:"#7C4DFF"},
+  "Gym Mode":    {cat:"Gym Beast Mode",genres:["Workout EDM","Power Hip Hop","Hard Rock","Trap Bangers"],atm:"Jaw-dropping drops and savage 808s for maximum output",art:"Eminem, AC/DC, Skrillex, Lil Baby",col:"#F44336"}
+};
+
+function populate(id,arr){
+  const s=document.getElementById(id);
+  arr.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;s.appendChild(o)});
+}
+populate('mood',MOODS);populate('vibe',VIBES);populate('activity',ACTS);populate('time',TIMES);
+
+const mps=document.getElementById('mps');
+MOODS.forEach(m=>{const b=document.createElement('button');b.className='mp';b.textContent=m;b.onclick=()=>quickMood(m);mps.appendChild(b)});
+
+const wv=document.getElementById('wv');
+for(let i=0;i<38;i++){const d=document.createElement('div');d.className='wb';d.style.setProperty('--i',i);wv.appendChild(d)}
+
+const viz=document.getElementById('viz');
+for(let i=0;i<34;i++){const d=document.createElement('div');d.className='vb';d.style.setProperty('--i',i);viz.appendChild(d)}
+
+const sl=document.getElementById('energy');
+sl.oninput=()=>updateE(sl.value);
+function updateE(v){
+  document.getElementById('ev').textContent=v;
+  document.querySelectorAll('#ebarsc span').forEach((b,i)=>b.classList.toggle('on',i<v));
+}
+updateE(3);
+
+function quickMood(m){
+  document.getElementById('mood').value=m;
+  document.querySelectorAll('.mp').forEach(p=>p.classList.toggle('on',p.textContent===m));
+}
+
+function setState(s){
+  document.getElementById('ridl').style.display=s==='idle'?'':'none';
+  document.getElementById('rldg').style.display=s==='loading'?'':'none';
+  document.getElementById('rcon').style.display=s==='result'?'':'none';
+}
+
+let ltimer=null;
+function startSteps(){
+  const ids=['l1','l2','l3','l4'];let i=0;
+  ids.forEach(id=>{const el=document.getElementById(id);el.className='ls'});
+  document.getElementById(ids[0]).classList.add('act');
+  ltimer=setInterval(()=>{
+    if(i<ids.length-1){
+      document.getElementById(ids[i]).classList.replace('act','done');
+      i++;document.getElementById(ids[i]).classList.add('act');
+    }
+  },600);
+}
+function stopSteps(){if(ltimer){clearInterval(ltimer);ltimer=null}}
+
+function predict(mood,energy,vibe,activity,time){
+  const base=DB[mood]||DB["Happy"];
+  const eBoost=Math.max(0,energy-3);
+  let cat=base.cat,genres=[...base.genres],atm=base.atm,art=base.art,col=base.col;
+  if(mood==="Happy"&&activity==="Partying"){cat="Amapiano Wave";genres=["Amapiano","Afro House","Afrobeats","Deep House"];art="Kabza De Small, DJ Maphorisa, Burna Boy, Focalistic";col="#7B1FA2"}
+  if((mood==="Motivated"||mood==="Gym Mode")&&energy>=4){cat="Gym Beast Mode";genres=["Workout EDM","Power Hip Hop","Hard Rock","Drill"];atm="Maximum energy, adrenaline rush, unstoppable momentum";art="Eminem, AC/DC, Skrillex, Pop Smoke";col="#F44336"}
+  if(mood==="Focused"&&(activity==="Working"||activity==="Studying")){cat="Classical Focus";genres=["Classical","Instrumental","Neoclassical","Piano"];art="Beethoven, Einaudi, Hans Zimmer, Chopin";col="#FFD700"}
+  if(vibe==="Aggressive"&&energy>=4){cat="Rock Rebellion";genres=["Rock","Alternative Rock","Metal","Hard Rock"];atm:"Raw electric guitars, rebellious spirit, anthemic power";art="Nirvana, Arctic Monkeys, Foo Fighters, Radiohead";col="#D32F2F"}
+  if(time==="Late Night"&&(mood==="Dark"||mood==="Night Drive")){cat="Night Drive Synth";genres=["Synthwave","Darksynth","Retrowave","Coldwave"];atm="Neon-soaked highways at 3AM, cinematic haze, pure escapism";art="Kavinsky, Perturbator, Gunship, Night Lovell";col="#7C4DFF"}
+  const confidence=Math.min(99,Math.max(55,72+eBoost*3+Math.floor(Math.random()*16)));
+  return{cat,genres,atm,art,col,confidence,energy};
+}
+
+function render(res,inputs){
+  const b=document.getElementById('rbadge');
+  b.textContent='◆ AI RECOMMENDATION';b.style.color=res.col;b.style.borderColor=res.col;b.style.background=hex2rgba(res.col,.07);
+  document.getElementById('rcat').textContent=res.cat;
+  document.getElementById('ratm').textContent=res.atm;
+  animConf(res.confidence);
+  renderEM(res.energy);
+  const cc=document.getElementById('chips');cc.innerHTML='';
+  const cp=[{bg:'rgba(0,229,255,.07)',bd:'rgba(0,229,255,.28)',tx:'#00e5ff'},{bg:'rgba(124,77,255,.07)',bd:'rgba(124,77,255,.28)',tx:'#7c4dff'},{bg:'rgba(233,30,140,.07)',bd:'rgba(233,30,140,.28)',tx:'#e91e8c'},{bg:'rgba(255,214,0,.07)',bd:'rgba(255,214,0,.28)',tx:'#ffd600'}];
+  res.genres.forEach((g,i)=>{const c=cp[i%cp.length],el=document.createElement('span');el.className='chip';el.textContent=g;el.style.background=c.bg;el.style.borderColor=c.bd;el.style.color=c.tx;el.style.animationDelay=`${i*.1}s`;cc.appendChild(el)});
+  document.getElementById('art').textContent=res.art;
+  const ep=document.getElementById('epills');ep.innerHTML='';
+  [['Mood',inputs.mood],['Energy',inputs.energy+'/5'],['Vibe',inputs.vibe],['Activity',inputs.activity],['Time',inputs.time]].forEach(([l,v])=>{const el=document.createElement('span');el.className='ep';el.textContent=`${l}: ${v}`;ep.appendChild(el)});
+  document.getElementById('viz').classList.add('pl');
+}
+
+function animConf(p){
+  const arc=document.getElementById('arcf'),val=document.getElementById('cpct');
+  let c=0;const step=p/50;
+  const iv=setInterval(()=>{c=Math.min(c+step,p);val.textContent=Math.round(c)+'%';arc.style.strokeDashoffset=314-(314*c/100);if(c>=p)clearInterval(iv)},30);
+}
+
+function renderEM(sc){
+  const bars=document.querySelectorAll('#emtr .embar');
+  bars.forEach((b,i)=>setTimeout(()=>b.classList.toggle('lit',i<sc),i*110));
+  document.getElementById('emv').textContent=['','Very Low','Low','Medium','High','Maximum'][sc]||'';
+}
+
+async function go(){
+  const pBtn=document.getElementById('pBtn'),sBtn=document.getElementById('sBtn');
+  pBtn.disabled=sBtn.disabled=true;pBtn.textContent='ANALYZING…';
+  setState('loading');startSteps();
+  await delay(2600);
+  stopSteps();
+  const mood=document.getElementById('mood').value,energy=+document.getElementById('energy').value,vibe=document.getElementById('vibe').value,activity=document.getElementById('activity').value,time=document.getElementById('time').value;
+  const res=predict(mood,energy,vibe,activity,time);
+  setState('result');render(res,{mood,energy,vibe,activity,time});
+  pBtn.disabled=sBtn.disabled=false;pBtn.textContent='◈ ANALYZE MY MOOD';
+}
+
+async function surprise(){
+  const pBtn=document.getElementById('pBtn'),sBtn=document.getElementById('sBtn');
+  pBtn.disabled=sBtn.disabled=true;sBtn.textContent='RANDOMIZING…';
+  setState('loading');startSteps();
+  await delay(2600);
+  stopSteps();
+  const mood=rnd(MOODS),energy=rndN(1,5),vibe=rnd(VIBES),activity=rnd(ACTS),time=rnd(TIMES);
+  document.getElementById('mood').value=mood;document.getElementById('energy').value=energy;updateE(energy);
+  document.getElementById('vibe').value=vibe;document.getElementById('activity').value=activity;document.getElementById('time').value=time;
+  document.querySelectorAll('.mp').forEach(p=>p.classList.toggle('on',p.textContent===mood));
+  const res=predict(mood,energy,vibe,activity,time);
+  setState('result');render(res,{mood,energy,vibe,activity,time});
+  pBtn.disabled=sBtn.disabled=false;sBtn.textContent='✦ SURPRISE ME';
+}
+
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+function rnd(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function rndN(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+function hex2rgba(hex,a){const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);return r?`rgba(${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)},${a})`:`rgba(0,229,255,${a})`}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!['BUTTON','SELECT','INPUT'].includes(document.activeElement.tagName))go()});
+
+(function particles(){
+  const c=document.getElementById('pc'),ctx=c.getContext('2d');
+  let W,H,ps=[];
+  const COLS=["#00e5ff","#7c4dff","#e91e8c","#ffd600"];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
+  window.addEventListener('resize',resize);resize();
+  class P{constructor(){this.reset()}reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=Math.random()*1.4+.3;this.vx=(Math.random()-.5)*.32;this.vy=(Math.random()-.5)*.32;this.a=Math.random()*.45+.08;this.col=COLS[Math.floor(Math.random()*COLS.length)]}update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W||this.y<0||this.y>H)this.reset()}draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=this.col;ctx.globalAlpha=this.a;ctx.fill()}}
+  for(let i=0;i<100;i++)ps.push(new P());
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    ps.forEach(p=>{p.update();p.draw()});
+    ctx.globalAlpha=1;
+    for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const dx=ps[i].x-ps[j].x,dy=ps[i].y-ps[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<75){ctx.beginPath();ctx.moveTo(ps[i].x,ps[i].y);ctx.lineTo(ps[j].x,ps[j].y);ctx.strokeStyle=ps[i].col;ctx.globalAlpha=(1-d/75)*.07;ctx.lineWidth=.5;ctx.stroke();ctx.globalAlpha=1}}
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script>
+</body>
+</html>
