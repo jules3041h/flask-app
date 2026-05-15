@@ -5,7 +5,7 @@ import joblib
 
 app = Flask(__name__)
 
-model = joblib.load("model.pkl")
+model = joblib.load("train_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
 @app.route('/')
