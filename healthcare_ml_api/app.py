@@ -1,58 +1,39 @@
-from flask import Flask, request, jsonify, render_template
-import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
 import joblib
 
-app = Flask(__name__)
+# Load dataset
+df = pd.read_csv("dataset/patient_data.csv")
 
-# Load model and scaler
-model = joblib.load("train_model.pkl")
-scaler = joblib.load("scaler.pkl")
+# Features and target
+X = df.drop("readmitted", axis=1)
+y = df["readmitted"]
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+# Scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        data = request.get_json()
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    X_scaled,
+    y,
+    test_size=0.2,
+    random_state=42
+)
 
-        features = np.array([
-            data['age'],
-            data['gender'],
-            data['blood_pressure'],
-            data['glucose_level'],
-            data['bmi'],
-            data['heart_rate'],
-            data['previous_admissions'],
-            data['chronic_disease'],
-            data['smoking_status']
-        ]).reshape(1, -1)
+# Train model
+model = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
 
-        scaled_features = scaler.transform(features)
+model.fit(X_train, y_train)
 
-        prediction = model.predict(scaled_features)[0]
-        probability = model.predict_proba(scaled_features)[0][1]
+# Save model and scaler
+joblib.dump(model, "model.pkl")
+joblib.dump(scaler, "scaler.pkl")
 
-        if prediction == 1:
-            risk = "High Risk of Readmission"
-        else:
-            risk = "Low Risk of Readmission"
-
-        response = {
-            "success": True,
-            "prediction": int(prediction),
-            "risk_level": risk,
-            "probability": round(float(probability), 2)
-        }
-
-        return jsonify(response)
-
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        })
-
-if __name__ == '__main__':
-    app.run(debug=True)
+print("Model and scaler saved successfully")
