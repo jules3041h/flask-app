@@ -1,39 +1,17 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score
+
+from flask import Flask, request, jsonify, render_template
+import numpy as np
 import joblib
 
-# Load dataset
-df = pd.read_csv("dataset/patient_data.csv")
+app = Flask(__name__)
 
-# Features and target
-X = df.drop("readmitted", axis=1)
-y = df["readmitted"]
+model = joblib.load("model.pkl")
+scaler = joblib.load("scaler.pkl")
 
-# Scaling
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-# Split data
-X_train, X_test, y_train, y_test = train_test_split(
-    X_scaled,
-    y,
-    test_size=0.2,
-    random_state=42
-)
-
-# Train model
-model = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42
-)
-
-model.fit(X_train, y_train)
-
-# Save model and scaler
-joblib.dump(model, "model.pkl")
-joblib.dump(scaler, "scaler.pkl")
-
-print("Model and scaler saved successfully")
+@app.route('/predict', methods=['POST'])
+def predict():
+    return jsonify({"message": "API working"})
